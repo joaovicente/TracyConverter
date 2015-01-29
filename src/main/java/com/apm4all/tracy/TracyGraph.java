@@ -16,22 +16,27 @@
 
 package com.apm4all.tracy;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
-import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.TreeMap;
 
-import org.jgrapht.DirectedGraph;
 import org.jgrapht.graph.DefaultDirectedGraph;
 import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.traverse.DepthFirstIterator;
+import org.jgrapht.traverse.GraphIterator;
 
 public class TracyGraph {
-    private DirectedGraph<TracyEvent,DefaultEdge> graph = new DefaultDirectedGraph<TracyEvent, DefaultEdge>(DefaultEdge.class);
-    private HashMap<String, TracyEvent> optIdToTracyEventMap = new HashMap<String, TracyEvent>();
+    private DefaultDirectedGraph<TracyEvent,DefaultEdge> graph = new DefaultDirectedGraph<TracyEvent, DefaultEdge>(DefaultEdge.class);
+    private Map<String, TracyEvent> optIdToTracyEventMap = new HashMap<String, TracyEvent>();
     private List<String> duplicateOptIds = new ArrayList<String>();
     private Set<String> taskIds = new HashSet<String>();
     private TracyEvent rootTracyEvent = null;
+    private TreeMap<String, TracyEvent> msecBeforeOrderedSet = new TreeMap<String, TracyEvent>();
+    //TODO: Order and edge weight by timestamp+optId of the child 
     
     public void add(TracyEvent tracyEvent)  {
         graph.addVertex(tracyEvent);
@@ -40,15 +45,27 @@ public class TracyGraph {
         }
         taskIds.add(tracyEvent.getTaskId());
         optIdToTracyEventMap.put(tracyEvent.getOptId(), tracyEvent);
+        StringBuilder msecOrderKey = new StringBuilder();
+        msecOrderKey.append(new Long(tracyEvent.getMsecBefore()).toString() )
+            .append("-")
+            .append(tracyEvent.getOptId());
+        msecBeforeOrderedSet.put(msecOrderKey.toString(), tracyEvent);
     }
     
     public void build() {
-        Iterator<TracyEvent> iterator = graph.vertexSet().iterator();
-        while (iterator.hasNext())  {
-            TracyEvent tracyEvent = iterator.next();
+        //TODO: perform msec parent->child offsets
+        List<TracyEvent> reverseMsecOrderedTracyEvents = new ArrayList<TracyEvent>();
+        
+        for(Map.Entry<String ,TracyEvent> entry : msecBeforeOrderedSet.entrySet()) {
+            reverseMsecOrderedTracyEvents.add(entry.getValue());
+        }
+        Collections.reverse(reverseMsecOrderedTracyEvents);
+        for (TracyEvent tracyEvent : reverseMsecOrderedTracyEvents)  {
             TracyEvent parentOptTracyEvent = optIdToTracyEventMap.get(tracyEvent.getParentOptId());
             if (parentOptTracyEvent != null)    {
                 graph.addEdge(parentOptTracyEvent, tracyEvent);
+                System.out.println("Build() adding Edge FROM "+ tracyEvent.getLabel() + " TO " 
+                + parentOptTracyEvent.getLabel());
             }
             else {
                 rootTracyEvent = tracyEvent;
@@ -86,4 +103,22 @@ public class TracyGraph {
         return graph.toString();
     }
     
+	public String asTimeline()  {
+	    StringBuilder sb = new StringBuilder();
+	    GraphIterator<TracyEvent, DefaultEdge> iterator = 
+	            new DepthFirstIterator<TracyEvent, DefaultEdge>(graph);
+	    while (iterator.hasNext()) {
+	        TracyEvent tracyEvent = iterator.next();
+	        sb.append("\r\n "
+	                + "label=\"" + tracyEvent.getLabel() + "\","
+	                + "elapsed=\"" + tracyEvent.getMsecElapsed()
+	                );
+	    }
+	    return sb.toString();
+	}
+	
+	// get-depth-next
+	// if has children return children
+	// if no children return me
+	
 }
