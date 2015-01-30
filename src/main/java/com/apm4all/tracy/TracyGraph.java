@@ -103,22 +103,37 @@ public class TracyGraph {
         return graph.toString();
     }
     
-	public String asTimeline()  {
-	    StringBuilder sb = new StringBuilder();
-	    GraphIterator<TracyEvent, DefaultEdge> iterator = 
-	            new DepthFirstIterator<TracyEvent, DefaultEdge>(graph);
-	    while (iterator.hasNext()) {
-	        TracyEvent tracyEvent = iterator.next();
-	        sb.append("\r\n "
-	                + "label=\"" + tracyEvent.getLabel() + "\","
-	                + "elapsed=\"" + tracyEvent.getMsecElapsed()
-	                );
-	    }
-	    return sb.toString();
-	}
-	
-	// get-depth-next
-	// if has children return children
-	// if no children return me
-	
+    public String asTimeline()  {
+        int numRows = 0;
+        int row = 0;
+        StringBuilder sb = new StringBuilder();
+        GraphIterator<TracyEvent, DefaultEdge> iterator = 
+                new DepthFirstIterator<TracyEvent, DefaultEdge>(graph);
+
+        sb.append("dataTable.addRows([");
+        while (iterator.hasNext()) {
+            if (numRows > 0)	{
+                sb.append(",");
+            }
+            numRows++;
+            TracyEvent tracyEvent = iterator.next();
+            sb.append("\r\n[ '" + tracyEvent.getLabel()  
+                    + "', '" + tracyEvent.getLabel()
+                    + "', new Date(" + tracyEvent.getMsecBefore() 
+                    + "), new Date(" + tracyEvent.getMsecAfter() + ") ]");
+        }
+        sb.append("]);\r\n");
+        sb.append("var options = { colors : [");
+        String colors[] = {"#000000","#FF0000","#00FF00","#0000FF","#FFFF00","#00FFFF","#FF00FF","#C0C0C0","#808080","#800000","#808000","#008000","#800080","#008080","#000080"};
+        while(numRows> 0)   {
+            sb.append("\'" + colors[row%colors.length] + "\'");
+            if (numRows > 1)    {
+                sb.append(",");
+            }
+            numRows--;
+            row++;
+        }
+        sb.append("]};");
+        return sb.toString();
+    }
 }
