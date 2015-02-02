@@ -66,8 +66,12 @@ public class TracyEventParser {
         map.remove("msecElapsed");
         tracyEvent.addAnnotation("host", map.get("host"));
         map.remove("host");
-        tracyEvent.addAnnotation("host", map.get("component"));
+        tracyEvent.addAnnotation("component", map.get("component"));
         map.remove("component");
+        
+        for (String key : map.keySet())    {
+            tracyEvent.addAnnotation(key, map.get(key));
+        }
         return tracyEvent;
     }
 

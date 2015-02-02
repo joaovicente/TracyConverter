@@ -41,9 +41,8 @@ public class TracyEventParserTest {
         assertEquals(MSEC_BEFORE_VALUE, Long.toString(tracyEvent.getMsecBefore()));
         assertEquals(MSEC_AFTER_VALUE, Long.toString(tracyEvent.getMsecAfter()));
         assertEquals(MSEC_ELAPSED_VALUE, Long.toString(tracyEvent.getMsecElapsed()));
-        //FIXME: Need TracyEvent.getAnnotation(annotationKey) method to validate data
-//        assertEquals(HOST_VALUE, tracyEvent.getAnnotation("host");
-//        assertEquals(COMPONENT_VALUE, tracyEvent.getAnnotation("component");  
-//        assertEquals(ANNOTATION1_VALUE, tracyEvent.getAnnotation("");
+        assertEquals(HOST_VALUE, tracyEvent.getAnnotation(HOST_KEY));
+        assertEquals(COMPONENT_VALUE, tracyEvent.getAnnotation(COMPONENT_KEY));  
+        assertEquals(ANNOTATION_1_VALUE, tracyEvent.getAnnotation(ANNOTATION_1_KEY));
     }
 }
